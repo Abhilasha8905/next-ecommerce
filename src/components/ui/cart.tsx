@@ -13,7 +13,7 @@ const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({ cartItemCount }
   useEffect(() => {
     const storedCart = localStorage.getItem('cart');
     if (storedCart) {
-      setCart(Object.values(JSON.parse(storedCart))?.reduce((acc: number, curr: any) => acc + (curr as number), 0));
+      setCart(Object.values(JSON.parse(storedCart) as Record<string, number>)?.reduce((acc: number, curr: number) => acc + curr, 0));
     }
   }, [cartItemCount]);
 
