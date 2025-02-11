@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { getOrders } from '~/src/lib/utils';
 
 type OrderItem = {
   id: string;
@@ -39,16 +40,17 @@ const OrdersPage: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('/api/orders')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch orders');
-        }
-        return res.json();
-      })
-      .then(data => setOrders(data.data))
-      .catch(error => setError(error.message))
-      .finally(() => setLoading(false));
+    const fetchOrders = async () => {
+      try {
+        const orders = await getOrders();
+        setOrders(orders);
+      } catch (error) {
+        setError('Failed to fetch orders');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
   }, []);
 
   if (loading) {

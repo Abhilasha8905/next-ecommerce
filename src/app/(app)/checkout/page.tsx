@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
+import { fetchProductDetails } from '~/src/lib/utils';
+import { Product } from '~/src/types/app';
 
 type CheckoutForm = {
   name: string;
@@ -10,49 +12,36 @@ type CheckoutForm = {
   address: string;
 };
 
-type Product = {
-  [x: string]: number;
-  id: number;
-  name: string;
-  price: { amount: number; currency: string };
-  image: string;
-  description: string;
-};
+type checkoutProduct = Product & { quantity: number };
 
 const CheckoutPage: React.FC = () => {
   const router = useRouter();
-  const [cart, setCart] = useState<any>({});
-  const [calculatedCart, setCalculatedCart] = useState<any>({});
+  const setCart = useState<{ [key: number]: number }>({})[1];
+  const [calculatedCart, setCalculatedCart] = useState<{ [key: string]: checkoutProduct }>({});
   const [form, setForm] = useState<CheckoutForm>({ name: '', email: '', address: '' });
   const [totalPrice, setTotalPrice] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch product details based on the ids and quantities stored in localStorage
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       const parsedCart = JSON.parse(savedCart);
       setCart(parsedCart);
-      fetchProductDetails(parsedCart || {});
+      fetchData(parsedCart || {});
     }
   }, []);
 
-  // Fetch details for each product in the cart
-  const fetchProductDetails = async (cartItems: { [key: number]: number }) => {
+  const fetchData = async (cartItems: { [key: number]: number }) => {
     try {
       const productDetails = await Promise.all(
         Object.entries(cartItems).map(async ([id, quantity]) => {
-          const response = await fetch(`/api/products/${id}`);
-          if (!response.ok) {
-            throw new Error(`Failed to fetch product with ID ${id}`);
-          }
-          const product = await response.json();
-          return { ...product.data, quantity };
+          const product = await fetchProductDetails(id);
+
+          return { ...product, quantity };
         }),
       );
 
-      // Update calculated cart state with product details
-      const updatedCart = productDetails.reduce((acc: { [key: number]: Product }, item: Product) => {
+      const updatedCart = productDetails.reduce((acc: { [key: string]: checkoutProduct }, item: checkoutProduct) => {
         if (item?.id) {
           acc[item.id] = item;
         }
@@ -68,9 +57,8 @@ const CheckoutPage: React.FC = () => {
     }
   };
 
-  const calculateTotal = (cartItems: { [key: number]: Product }) => {
-    const total = Object.values(cartItems).reduce((sum, item: Product) => {
-      // Ensure item.quantity and item.price are numbers
+  const calculateTotal = (cartItems: { [key: number]: checkoutProduct }) => {
+    const total = Object.values(cartItems).reduce((sum, item: checkoutProduct) => {
       const quantity = Number(item.quantity) || 0;
       const price = Number(item.price.amount) || 0;
 
@@ -93,9 +81,9 @@ const CheckoutPage: React.FC = () => {
         name: item.name,
         description: item.description,
         price: item.price,
-        images: [item.image],
+        images: [item.images],
         categories: [],
-        quantity: item.quantity,
+        quantity: (item as checkoutProduct).quantity,
       })),
     };
 
@@ -137,7 +125,7 @@ const CheckoutPage: React.FC = () => {
           <div className='bg-white shadow-md rounded-lg p-6 mb-8'>
             <h2 className='text-xl font-semibold mb-4'>Order Summary</h2>
             <div className='space-y-4'>
-              {Object.values(calculatedCart).map((item: Product) => (
+              {(Object.values(calculatedCart) as Product[]).map((item: Product) => (
                 <Card key={item.id} className='shadow-lg mb-4'>
                   <CardHeader>
                     <CardTitle className='text-lg font-medium text-indigo-800'>{item.name}</CardTitle>
@@ -145,12 +133,13 @@ const CheckoutPage: React.FC = () => {
                   <CardContent>
                     <div className='flex items-center space-x-4'>
                       <div>
-                        <p className='text-gray-700'>Quantity: {item.quantity}</p>
+                        <p className='text-gray-700'>Quantity: {(item as checkoutProduct).quantity}</p>
                         <p className='text-gray-700'>
                           Price: {item.price.currency} {item.price.amount.toFixed(2)}{' '}
                         </p>
                         <p className='text-gray-700'>
-                          Total: {item.price.currency} {(item.quantity * item.price.amount).toFixed(2)}
+                          Total: {item.price.currency}{' '}
+                          {(((item as checkoutProduct).quantity ?? 0) * item.price.amount).toFixed(2)}
                         </p>
                       </div>
                     </div>

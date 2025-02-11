@@ -4,10 +4,12 @@ import { data } from '@/lib/api';
 export async function GET(request: NextRequest) {
   let { products } = data;
 
-  const category = request.nextUrl.searchParams.get('category');
-  if (category) {
-    products = products.filter(p => p.categories.includes(category));
+  const categoryParam = request.nextUrl.searchParams.get('categories');
+  if (categoryParam) {
+    const categories = categoryParam.split(',');
+    products = products.filter(p => categories.some(category => p.categories.includes(category)));
   }
+
   return NextResponse.json(
     {
       success: true,
@@ -19,5 +21,3 @@ export async function GET(request: NextRequest) {
     },
   );
 }
-
-
