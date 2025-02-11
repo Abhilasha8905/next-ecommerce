@@ -1,0 +1,64 @@
+@url = http://localhost:3000/api
+@id = 00000000-0000-0000-0000-000000000001
+
+
+##################
+### CATEGORIES ###
+##################
+
+### List
+GET {{url}}/categories
+
+### Detail
+GET {{url}}/categories/{{id}}
+
+################
+### PRODUCTS ###
+################
+
+### List
+GET {{url}}/products
+
+### List by Category
+GET {{url}}/products?category=category-1
+
+### Detail
+GET {{url}}/products/{{id}}
+
+##############
+### ORDERS ###
+##############
+
+### List
+GET {{url}}/orders
+
+### Detail
+GET {{url}}/orders/{{id}}
+
+#################
+### FUNCTIONS ###
+#################
+
+### Checkout
+POST {{url}}/checkout
+Content-Type: application/json
+
+{
+    "products": [
+        {
+            "id": "{{id}}",
+            "quantity": 1
+        }
+    ]
+}
+
+### Placeholders
+GET {{url}}/resource
+###
+POST {{url}}/resource
+###
+PUT {{url}}/resource
+###
+PATCH {{url}}/resource
+###
+DELETE {{url}}/resource
